@@ -17,7 +17,7 @@ class Pokemon:
         # Metode asinkron untuk mendapatkan nama pokémon melalui PokeAPI
         url = f'https://pokeapi.co/api/v2/pokemon/{self.pokemon_number}'  # URL API untuk request
         async with aiohttp.ClientSession() as session:  # Membuka sesi HTTP
-            async with session.get(url) as response:  # Mengirim permintaan GET
+            async with session.get(url) as response:  # Mengirim request GET
                 if response.status == 200:
                     data = await response.json()  # Menerima dan mendekode respons JSON
                     return data['forms'][0]['name']  # Mengembalikan nama pokémon
