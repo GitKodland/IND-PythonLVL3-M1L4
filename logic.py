@@ -19,7 +19,7 @@ class Pokemon:
         async with aiohttp.ClientSession() as session:  # Membuka sesi HTTP
             async with session.get(url) as response:  # Mengirim request GET
                 if response.status == 200:
-                    data = await response.json()  # Menerima dan mendekode respons JSON
+                    data = await response.json()  # Menerima dan mendekode respon JSON
                     return data['forms'][0]['name']  # Mengembalikan nama pokémon
                 else:
                     return "Pikachu"  # Mengembalikan nama default jika permintaan gagal
