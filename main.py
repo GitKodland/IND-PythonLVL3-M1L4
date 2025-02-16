@@ -1,44 +1,39 @@
-import telebot 
+import discord
+from discord.ext import commands
 from config import token
-from random import randint
-from logic import *
+from logic import Pokemon
 
-bot = telebot.TeleBot(token) 
+# Pengaturan intents untuk bot
+intents = discord.Intents.default()  # Mendapatkan pengaturan default
+intents.messages = True              # Mengizinkan bot untuk memproses pesan
+intents.message_content = True       # Mengizinkan bot untuk membaca isi pesan
+intents.guilds = True                # Mengizinkan bot untuk bekerja dengan server (guilds)
 
-@bot.message_handler(commands=['go'])
-def start(message):
-    if message.from_user.username not in Pokemon.pokemons.keys():
-        chance = randint(1,3)
-        if chance == 1:
-            pokemon = Pokemon(message.from_user.username)
-        elif chance == 2:
-            pokemon = Wizard(message.from_user.username)
-        elif chance == 3:
-            pokemon = Fighter(message.from_user.username)
-        bot.send_message(message.chat.id, pokemon.info())
-        bot.send_photo(message.chat.id, pokemon.show_img())
-    else:
-        bot.reply_to(message, "Kamu sudah punya Pokemon, tidak bisa membuat lagi ya!")
+# Membuat bot dengan prefix command dan intents yang telah diatur
+bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Event yang terpicu ketika bot siap bekerja
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')  # Menampilkan nama bot di console
 
-@bot.message_handler(commands=['attack'])
-def attack_pok(message):
-    if message.reply_to_message:
-        if message.reply_to_message.from_user.username in Pokemon.pokemons.keys() and message.from_user.username in Pokemon.pokemons.keys():
-            enemy = Pokemon.pokemons[message.reply_to_message.from_user.username]
-            pok = Pokemon.pokemons[message.from_user.username]
-            res = pok.attack(enemy)
-            bot.send_message(message.chat.id, res)
+# Command '!go'
+@bot.command()
+async def go(ctx):
+    author = ctx.author.name  # Mendapatkan nama pengirim pesan
+    # Memeriksa apakah pengguna sudah memiliki pokemon
+    if author not in Pokemon.pokemons.keys():
+        pokemon = Pokemon(author)  # Membuat pokemon baru
+        await ctx.send(await pokemon.info())  # Mengirim informasi pokemon
+        image_url = await pokemon.show_img()  # Mendapatkan URL gambar pokemon
+        if image_url:
+            embed = discord.Embed()  # Membuat pesan embed
+            embed.set_image(url=image_url)  # Mengatur gambar pokemon
+            await ctx.send(embed=embed)  # Mengirim pesan embed dengan gambar
         else:
-            bot.send_message(message.chat.id, "Kamu hanya bisa bertarung melawan Pokemon lain nih!")
+            await ctx.send("Tidak dapat memuat gambar pokemon.")
     else:
-            bot.send_message(message.chat.id, "Untuk menyerang, balas pesan dari pemain yang Pokemon-nya mau kamu serang ya!")
+        await ctx.send("Kamu sudah memiliki pokemon.")  # Pesan jika pokemon sudah dibuat
 
-@bot.message_handler(commands=['info'])
-def info(message):
-    if message.from_user.username in Pokemon.pokemons.keys():
-            pok = Pokemon.pokemons[message.from_user.username]
-            bot.send_message(message.chat.id, pok.info())
-
-
-bot.infinity_polling(none_stop=True)
+# Menjalankan bot
+bot.run(token)
